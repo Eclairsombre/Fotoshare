@@ -1,0 +1,38 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    ports:
+      - 3306:3306
+    volumes:
+      - ~/apps/mariadb:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_PASSWORD=password
+      - MYSQL_USER=admin
+      - MYSQL_DATABASE=bd
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 3306:8080
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - "SPRING_DATASOURCE_URL=jdbc:mariadb://db:3306/bd"
+      - "SPRING_DATASOURCE_USERNAME=admin"
+      - "SPRING_DATASOURCE_PASSWORD=password"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8080 || exit 1
+      interval: 5m
+      timeout: 3s
+      retries: 3
+      start_period: 2m
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:

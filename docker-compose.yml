@@ -1,0 +1,49 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    ports:
+      - 3306:3306
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./mariadb-init:/docker-entrypoint-initdb.d
+    environment:
+      - MARIADB_ROOT_PASSWORD=password
+      - MARIADB_PASSWORD=password
+      - MARIADB_USER=admin
+      - MARIADB_DATABASE=uploads
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 30s
+      interval: 10s
+      timeout: 10s
+      retries: 5
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      - ADMINER_DEFAULT_SERVER=mariadb
+      - ADMINER_DEFAULT_USER=admin
+      - ADMINER_DEFAULT_PASSWORD=password
+
+  app:
+    build: .
+    ports:
+      - "8081:8080"
+    environment:
+      - "SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/uploads"
+      - "SPRING_DATASOURCE_USERNAME=admin"
+      - "SPRING_DATASOURCE_PASSWORD=password"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8081 || exit 1
+      interval: 5m
+      timeout: 10s
+      retries: 5
+      start_period: 3m
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+volumes:
+  mariadb_data:

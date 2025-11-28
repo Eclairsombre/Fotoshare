@@ -12,5 +12,4 @@ public class AppReseauPartagePhotoApplication {
     public static void main(String[] args) {
         SpringApplication.run(AppReseauPartagePhotoApplication.class, args);
     }
-
 }
