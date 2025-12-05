@@ -1,4 +1,5 @@
 package local.epul4a.fotoshare.controller;
+
 import local.epul4a.fotoshare.dto.CommentaryResponseDto;
 import local.epul4a.fotoshare.dto.PhotoResponseDto;
 import local.epul4a.fotoshare.dto.PhotoUploadDto;
@@ -19,6 +20,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -26,6 +28,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -266,9 +269,8 @@ public class PhotoController {
         }
         return "redirect:/photos/" + id;
     }
-    /**
-     * Supprime une photo.
-     */
+
+    @PreAuthorize("@securityService.canDeletePhoto(authentication, #id)")
     @PostMapping("/{id}/delete")
     public String deletePhoto(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         Long userId = getCurrentUserId();
@@ -349,6 +351,7 @@ public class PhotoController {
     /**
      * Révoque un partage.
      */
+    @PreAuthorize("@securityService.isPhotoOwner(authentication, #photoId)")
     @PostMapping("/{photoId}/share/{userId}/revoke")
     public String revokeShare(@PathVariable Long photoId,
                              @PathVariable Long userId,
@@ -367,9 +370,8 @@ public class PhotoController {
         }
         return "redirect:/photos/" + photoId + "/share";
     }
-    /**
-     * Ajoute un commentaire à une photo.
-     */
+
+    @PreAuthorize("@securityService.canCommentOnPhoto(authentication, #id)")
     @PostMapping("/{id}/comments")
     public String addComment(@PathVariable Long id,
                             @RequestParam("text") String text,
@@ -390,9 +392,8 @@ public class PhotoController {
         }
         return "redirect:/photos/" + id;
     }
-    /**
-     * Supprime un commentaire.
-     */
+
+    @PreAuthorize("@securityService.canDeleteComment(authentication, #commentId)")
     @PostMapping("/{photoId}/comments/{commentId}/delete")
     public String deleteComment(@PathVariable Long photoId,
                                @PathVariable Long commentId,
@@ -413,9 +414,8 @@ public class PhotoController {
         }
         return "redirect:/photos/" + photoId;
     }
-    /**
-     * Modifie un commentaire.
-     */
+
+    @PreAuthorize("@securityService.canEditComment(authentication, #commentId)")
     @PostMapping("/{photoId}/comments/{commentId}/edit")
     public String editComment(@PathVariable Long photoId,
                              @PathVariable Long commentId,

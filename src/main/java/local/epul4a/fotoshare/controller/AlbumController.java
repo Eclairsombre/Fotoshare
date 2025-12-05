@@ -1,4 +1,5 @@
 package local.epul4a.fotoshare.controller;
+
 import local.epul4a.fotoshare.dto.AlbumResponseDto;
 import local.epul4a.fotoshare.dto.PhotoResponseDto;
 import local.epul4a.fotoshare.model.Album;
@@ -9,30 +10,32 @@ import local.epul4a.fotoshare.repository.UserRepository;
 import local.epul4a.fotoshare.service.AlbumService;
 import local.epul4a.fotoshare.service.PhotoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-/**
- * Contrôleur pour la gestion des albums.
- */
+
 @Controller
 @RequestMapping("/albums")
+@PreAuthorize("isAuthenticated()")
 public class AlbumController {
+
     @Autowired
     private AlbumService albumService;
+
     @Autowired
     private PhotoService photoService;
+
     @Autowired
     private UserRepository userRepository;
-    /**
-     * Affiche la liste des albums de l'utilisateur.
-     */
+
     @GetMapping
     public String listAlbums(Model model) {
         Long userId = getCurrentUserId();
@@ -52,9 +55,7 @@ public class AlbumController {
         model.addAttribute("albums", albumDtos);
         return "albums/list";
     }
-    /**
-     * Affiche le formulaire de création d'album.
-     */
+
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         Long userId = getCurrentUserId();
@@ -63,9 +64,7 @@ public class AlbumController {
         }
         return "albums/create";
     }
-    /**
-     * Traite la création d'un album.
-     */
+
     @PostMapping("/create")
     public String createAlbum(@RequestParam("name") String name,
                              @RequestParam(value = "description", required = false) String description,
@@ -83,9 +82,8 @@ public class AlbumController {
             return "redirect:/albums/create";
         }
     }
-    /**
-     * Affiche un album et ses photos.
-     */
+
+    @PreAuthorize("@securityService.canAccessAlbum(authentication, #id)")
     @GetMapping("/{id}")
     public String viewAlbum(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         Long userId = getCurrentUserId();
@@ -122,9 +120,8 @@ public class AlbumController {
         model.addAttribute("isOwner", album.getOwner_id().equals(userId));
         return "albums/view";
     }
-    /**
-     * Affiche le formulaire de modification d'album.
-     */
+
+    @PreAuthorize("@securityService.canEditAlbum(authentication, #id)")
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         Long userId = getCurrentUserId();
@@ -144,9 +141,8 @@ public class AlbumController {
         model.addAttribute("album", album);
         return "albums/edit";
     }
-    /**
-     * Traite la modification d'un album.
-     */
+
+    @PreAuthorize("@securityService.canEditAlbum(authentication, #id)")
     @PostMapping("/{id}/edit")
     public String updateAlbum(@PathVariable Long id,
                              @RequestParam("name") String name,
@@ -164,9 +160,8 @@ public class AlbumController {
         }
         return "redirect:/albums/" + id;
     }
-    /**
-     * Supprime un album.
-     */
+
+    @PreAuthorize("@securityService.canDeleteAlbum(authentication, #id)")
     @PostMapping("/{id}/delete")
     public String deleteAlbum(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         Long userId = getCurrentUserId();
@@ -182,9 +177,8 @@ public class AlbumController {
         }
         return "redirect:/albums";
     }
-    /**
-     * Ajoute une photo à un album.
-     */
+
+    @PreAuthorize("@securityService.isAlbumOwner(authentication, #albumId)")
     @PostMapping("/{albumId}/photos/add")
     public String addPhotoToAlbum(@PathVariable Long albumId,
                                   @RequestParam("photoId") Long photoId,
@@ -201,9 +195,8 @@ public class AlbumController {
         }
         return "redirect:/albums/" + albumId;
     }
-    /**
-     * Retire une photo d'un album.
-     */
+
+    @PreAuthorize("@securityService.isAlbumOwner(authentication, #albumId)")
     @PostMapping("/{albumId}/photos/{photoId}/remove")
     public String removePhotoFromAlbum(@PathVariable Long albumId,
                                        @PathVariable Long photoId,
@@ -220,9 +213,7 @@ public class AlbumController {
         }
         return "redirect:/albums/" + albumId;
     }
-    /**
-     * Récupère l'ID de l'utilisateur actuellement connecté.
-     */
+
     private Long getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
@@ -233,9 +224,7 @@ public class AlbumController {
                 .map(User::getId)
                 .orElse(null);
     }
-    /**
-     * Récupère le nom d'utilisateur actuellement connecté.
-     */
+
     private String getCurrentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {

@@ -86,16 +86,6 @@ public class UserService {
     }
     /**
      * Supprime un utilisateur et toutes ses donnees associees en cascade.
-     * Cela inclut :
-     * - Tous les commentaires de l'utilisateur
-     * - Tous les partages vers l'utilisateur
-     * - Les commentaires sur les photos de l'utilisateur
-     * - Les partages des photos de l'utilisateur
-     * - Les fichiers physiques des photos
-     * - Les miniatures des photos
-     * - Toutes les photos de l'utilisateur
-     * - Tous les albums de l'utilisateur
-     * - L'utilisateur lui-meme
      *
      * @param userId L'ID de l'utilisateur a supprimer
      */
